@@ -1,0 +1,2 @@
+defmodule UeberauthSlack do
+end
