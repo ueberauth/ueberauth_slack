@@ -1,107 +1,89 @@
-# ÜeberauthSlack
+# Überauth Slack
 
-Proivdes an Üeberauth strategy to use Slack as the authentication mechanism.
+> Slack OAuth2 strategy for Überauth.
 
 ## Installation
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed as:
+1. Setup your application at [Slack API](https://api.slack.com).
 
-1. Add ueberauth\_slack to your list of dependencies in `mix.exs`:
+1. Add `:ueberauth_slack` to your list of dependencies in `mix.exs`:
 
-````elixir
-def deps do
-  [{:ueberauth_slack, "~> 0.1.0"}]
-end
-````
+    ```elixir
+    def deps do
+      [{:ueberauth_slack, "~> 0.1"}]
+    end
+    ```
 
-2. Ensure oauth2 is started before your application:
+1. Add the strategy to your applications:
 
-```elixir
-def application do
-  [applications: [:oauth2]]
-end
-````
+    ```elixir
+    def application do
+      [applications: [:ueberauth_slack]]
+    end
+    ```
 
-3. Head over to [slack and create an application](https://api.slack.com/applications). You can use
-   http://localhost:4000/auth/slack/callback as the url for dev.
+1. Add Slack to your Überauth configuration:
 
-4. Add slack to your configuration (Phoenix)
+    ```elixir
+    config :ueberauth, Ueberauth,
+      providers: [
+        slack: [{Ueberauth.Strategy.Slack, []}]
+      ]
+    ```
 
-````elixir
-# To your ueberauth providers list
-config :ueberauth, Ueberauth,
-  providers: [
-    slack: { Ueberauth.Strategy.Slack, [] }
-  ]
+1.  Update your provider configuration:
 
-# To provide access to the slack secrets
+    ```elixir
+    config :ueberauth, Ueberauth.Strategy.Slack.OAuth,
+      client_id: System.get_env("SLACK_CLIENT_ID"),
+      client_secret: System.get_env("SLACK_CLIENT_SECRET")
+    ```
 
-config :ueberauth, Ueberauth.Strategy.Slack.OAuth,
-  client_id: System.get_env("SLACK_CLIENT_ID"),
-  client_secret: System.get_env("SLACK_CLIENT_SECRET")
-````
+1.  Include the Überauth plug in your controller:
 
-5. If you haven't already, create a pipeline for your Üeberauth
+    ```elixir
+    defmodule MyApp.AuthController do
+      use MyApp.Web, :controller
+      plug Ueberauth
+      ...
+    end
+    ```
 
-````elixir
-pipeline :ueberauth do
-  Ueberauth.plug "/auth"
-end
+1.  Create the request and callback routes if you haven't already:
 
-scope "/auth" do
-  pipe_through [:browser, :ueberauth]
+    ```elixir
+    scope "/auth", MyApp do
+      pipe_through :browser
 
-  # it does not matter which contorller for the request phase
-  # We just need to trigger the pipeline
-  get "/slack", PagesController, :index
-  get "/:provider/callback", AuthController, :callback
-end
-````
+      get "/:provider", AuthController, :request
+      get "/:provider/callback", AuthController, :callback
+    end
+    ```
 
-6. Implement your callback action in your controller to deal with an `Ueberauth.Auth` or `Ueberauth.Failure` callback
+1. You controller needs to implement callbacks to deal with `Ueberauth.Auth` and `Ueberauth.Failure` responses.
+
+For an example implementation see the [Überauth Example](https://github.com/ueberauth/ueberauth_example) application.
 
 ## Calling
 
-To run through slack, depending on the url you setup with `Ueberauth.plug/1` you
-can hit the url for the request phase.
+Depending on the configured url you can initial the request through:
 
     /auth/slack
 
-Or with options
+Or with options:
 
     /auth/slack?scope=users:read
 
-By default the scope requested will be "users:read". This can be configured
-either explicitly when you call the request path by providing a scope in the
-query string, or by setting a default in your configuration.
+By default the requested scope is "users:read". Scope can be configured either explicitly as a `scope` query value on the request path or in your configuration:
 
-````elixir
+```elixir
 config :ueberauth, Ueberauth,
   providers: [
-    slack: { Ueberauth.Strategy.Slack, [ default_scope: "users:read,users:write" ]
+    slack: {Ueberauth.Strategy.Slack, [default_scope: "users:read,users:write"]}
   ]
-````
+```
 
-# License
+## License
 
-The MIT License (MIT)
+Please see [LICENSE](https://github.com/ueberauth/ueberauth_slack/blob/master/LICENSE) for licensing details.
 
-Copyright (c) 2015 Daniel Neighman
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
