@@ -31,6 +31,19 @@
       ]
     ```
 
+    You can optionally restrict authentication by providing your team ID. [Find your Slack team ID here](https://api.slack.com/methods/auth.test/test). Note that this is NOT your team's Slack domain name!
+
+    ```elixir
+    config :ueberauth, Ueberauth,
+      providers: [
+        slack: [
+          {Ueberauth.Strategy.Slack, [
+            team: "0ABCDEF"
+          ]}
+        ]
+      ]
+    ```
+
 1.  Update your provider configuration:
 
     ```elixir
