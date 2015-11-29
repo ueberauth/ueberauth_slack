@@ -49,7 +49,13 @@ defmodule Ueberauth.Strategy.Slack do
   @doc false
   def handle_callback!(%Plug.Conn{ params: %{ "code" => code } } = conn) do
     module = option(conn, :oauth2_module)
-    token = apply(module, :get_token!, [[code: code]])
+    params = [code: code]
+    options = %{
+      options: [
+        client_options: [redirect_uri: callback_url(conn)]
+      ]
+    }
+    token = apply(module, :get_token!, [params, options])
 
     if token.access_token == nil do
       set_errors!(conn, [error(token.other_params["error"], token.other_params["error_description"])])
