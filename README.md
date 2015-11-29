@@ -10,7 +10,7 @@
 
     ```elixir
     def deps do
-      [{:ueberauth_slack, "~> 0.1"}]
+      [{:ueberauth_slack, "~> 0.2"}]
     end
     ```
 

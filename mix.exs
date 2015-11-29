@@ -1,7 +1,7 @@
 defmodule UeberauthSlack.Mixfile do
   use Mix.Project
 
-  @version "0.1.0"
+  @version "0.2.0"
 
   def project do
     [app: :ueberauth_slack,
@@ -19,13 +19,13 @@ defmodule UeberauthSlack.Mixfile do
   end
 
   def application do
-    [applications: [:logger]]
+    [applications: [:logger, :ueberauth, :oauth2]]
   end
 
   defp deps do
     [
       {:oauth2, "~> 0.5"},
-      {:ueberauth, "~>0.1"},
+      {:ueberauth, "~>0.2"},
 
       # Docs dependencies
       {:earmark, "~> 0.1", only: :dev},
