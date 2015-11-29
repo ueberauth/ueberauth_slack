@@ -31,6 +31,9 @@ defmodule Ueberauth.Strategy.Slack do
     if conn.params["state"], do: opts = Keyword.put(opts, :state, conn.params["state"])
     callback_url = callback_url(conn)
 
+    team = option(conn, :team)
+    if team, do: opts = Keyword.put(opts, :team, team)
+
     if String.ends_with?(callback_url, "?"), do: callback_url = String.slice(callback_url, 0..-2)
 
     opts = Keyword.put(opts, :redirect_uri, callback_url)
