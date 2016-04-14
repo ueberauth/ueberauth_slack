@@ -186,7 +186,7 @@ defmodule Ueberauth.Strategy.Slack do
   defp fetch_user(conn, token) do
     auth = conn.private.slack_auth
 
-    case OAuth2.AccessToken.post(token, "/users.info", [token: token.access_token, user: auth], ["user_id"], [{"Content-Type", "application/x-www-form-urlencoded"}]) do
+    case OAuth2.AccessToken.post(token, "/users.info", [token: token.access_token, user: auth["user_id"]], [{"Content-Type", "application/x-www-form-urlencoded"}]) do
       { :ok, %OAuth2.Response{status_code: 401, body: _body}} ->
         set_errors!(conn, [error("token", "unauthorized")])
       { :ok, %OAuth2.Response{status_code: status_code, body: user} } when status_code in 200..399 ->
