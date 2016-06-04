@@ -64,6 +64,7 @@ defmodule Ueberauth.Strategy.Slack do
       |> store_token(token)
       |> fetch_auth(token)
       |> fetch_user(token)
+      |> fetch_team(token)
     end
   end
 
@@ -157,7 +158,8 @@ defmodule Ueberauth.Strategy.Slack do
       raw_info: %{
         auth: conn.private.slack_auth,
         token: conn.private.slack_token,
-        user: conn.private.slack_user
+        user: conn.private.slack_user,
+        team: conn.private.slack_team
       }
     }
   end
@@ -197,6 +199,33 @@ defmodule Ueberauth.Strategy.Slack do
         end
       { :error, %OAuth2.Error{reason: reason} } ->
         set_errors!(conn, [error("OAuth2", reason)])
+    end
+  end
+
+  defp fetch_team(%Plug.Conn{ assigns: %{ ueberauth_failure: _fails }} = conn, _), do: conn
+
+  defp fetch_team(conn, token) do
+    auth = conn.private.slack_auth
+    token = conn.private.slack_token
+
+    scopes = (token.other_params["scope"] || "")
+    |> String.split(",")
+
+    case "team:read" in scopes do
+      false -> conn
+      true  ->
+        case OAuth2.AccessToken.post(token, "/team.info", [token: token.access_token], [{"Content-Type", "application/x-www-form-urlencoded"}]) do
+          { :ok, %OAuth2.Response{status_code: 401, body: _body}} ->
+            set_errors!(conn, [error("token", "unauthorized")])
+          { :ok, %OAuth2.Response{status_code: status_code, body: team} } when status_code in 200..399 ->
+            if team["ok"] do
+              put_private(conn, :slack_team, team["team"])
+            else
+              set_errors!(conn, [error(team["error"], team["error"])])
+            end
+          { :error, %OAuth2.Error{reason: reason} } ->
+            set_errors!(conn, [error("OAuth2", reason)])
+        end
     end
   end
 
