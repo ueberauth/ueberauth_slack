@@ -27,7 +27,7 @@
     ```elixir
     config :ueberauth, Ueberauth,
       providers: [
-        slack: [{Ueberauth.Strategy.Slack, []}]
+        slack: {Ueberauth.Strategy.Slack, []}
       ]
     ```
 
@@ -36,11 +36,7 @@
     ```elixir
     config :ueberauth, Ueberauth,
       providers: [
-        slack: [
-          {Ueberauth.Strategy.Slack, [
-            team: "0ABCDEF"
-          ]}
-        ]
+        slack: {Ueberauth.Strategy.Slack, [team: "0ABCDEF"]}
       ]
     ```
 
