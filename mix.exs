@@ -44,7 +44,7 @@ defmodule UeberauthSlack.Mixfile do
   defp package do
     [files: ["lib", "mix.exs", "README.md"],
       maintainers: ["Daniel Neighman"],
-      licences: ["MIT"],
+      licenses: ["MIT"],
       links: %{ "Slack": "https://github.com/hassox/ueberauth_slack"}]
   end
 end
