@@ -1,12 +1,12 @@
 defmodule UeberauthSlack.Mixfile do
   use Mix.Project
 
-  @version "0.2.0"
+  @version "0.3.0"
 
   def project do
     [app: :ueberauth_slack,
      version: @version,
-     name: "Ueberauth Github",
+     name: "Ueberauth Slack",
      package: package,
      elixir: "~> 1.1",
      build_embedded: Mix.env == :prod,
@@ -25,7 +25,7 @@ defmodule UeberauthSlack.Mixfile do
   defp deps do
     [
       {:oauth2, "~> 0.5"},
-      {:ueberauth, "~>0.2"},
+      {:ueberauth, "~> 0.2"},
 
       # Docs dependencies
       {:earmark, "~> 0.1", only: :dev},
@@ -34,14 +34,7 @@ defmodule UeberauthSlack.Mixfile do
   end
 
   defp docs do
-    [
-      extras: docs_extras,
-      main: "extra-readme",
-    ]
-  end
-
-  defp docs_extras do
-    ["README.md"]
+    [main: "README.md"]
   end
 
   defp description do
