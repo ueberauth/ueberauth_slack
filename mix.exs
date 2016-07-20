@@ -34,7 +34,7 @@ defmodule UeberauthSlack.Mixfile do
   end
 
   defp docs do
-    [main: "README.md"]
+    [extras: ["README.md", "CONTRIBUTING.md"]]
   end
 
   defp description do
@@ -45,6 +45,6 @@ defmodule UeberauthSlack.Mixfile do
     [files: ["lib", "mix.exs", "README.md"],
       maintainers: ["Daniel Neighman"],
       licenses: ["MIT"],
-      links: %{ "Slack": "https://github.com/hassox/ueberauth_slack"}]
+      links: %{"Slack": "https://github.com/hassox/ueberauth_slack"}]
   end
 end
