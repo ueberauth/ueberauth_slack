@@ -159,10 +159,10 @@ defmodule Ueberauth.Strategy.Slack do
   def extra(conn) do
     %Extra {
       raw_info: %{
-        auth: conn.private.slack_auth,
-        token: conn.private.slack_token,
-        user: conn.private.slack_user,
-        team: conn.private.slack_team
+        auth: conn.private[:slack_auth],
+        token: conn.private[:slack_token],
+        user: conn.private[:slack_user],
+        team: conn.private[:slack_team]
       }
     }
   end
