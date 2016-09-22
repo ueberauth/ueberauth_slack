@@ -1,21 +1,21 @@
 defmodule UeberauthSlack.Mixfile do
   use Mix.Project
 
-  @version "0.3.0"
+  @version "0.4.0"
 
   def project do
     [app: :ueberauth_slack,
      version: @version,
      name: "Ueberauth Slack",
-     package: package,
-     elixir: "~> 1.1",
+     package: package(),
+     elixir: "~> 1.3",
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
      source_url: "https://github.com/hassox/ueberauth_slack",
      homepage_url: "https://github.com/hassox/ueberauth_slack",
-     description: description,
-     deps: deps,
-     docs: docs]
+     description: description(),
+     deps: deps(),
+     docs: docs()]
   end
 
   def application do
@@ -25,11 +25,11 @@ defmodule UeberauthSlack.Mixfile do
   defp deps do
     [
       {:oauth2, "0.6.0"},
-      {:ueberauth, "~> 0.2"},
+      {:ueberauth, "~> 0.4"},
 
       # Docs dependencies
-      {:earmark, "~> 0.1", only: :dev},
-      {:ex_doc, "~> 0.1", only: :dev},
+      {:earmark, ">= 0.0.0", only: :dev},
+      {:ex_doc, ">= 0.0.0", only: :dev},
     ]
   end
 

@@ -28,13 +28,16 @@ defmodule Ueberauth.Strategy.Slack do
   def handle_request!(conn) do
     scopes = conn.params["scope"] || option(conn, :default_scope)
     opts = [ scope: scopes ]
-    if conn.params["state"], do: opts = Keyword.put(opts, :state, conn.params["state"])
-    callback_url = callback_url(conn)
+    opts =
+      if conn.params["state"], do: Keyword.put(opts, :state, conn.params["state"]), else: opts
 
     team = option(conn, :team)
-    if team, do: opts = Keyword.put(opts, :team, team)
+    opts =
+      if team, do: Keyword.put(opts, :team, team), else: opts
 
-    if String.ends_with?(callback_url, "?"), do: callback_url = String.slice(callback_url, 0..-2)
+    callback_url = callback_url(conn)
+    callback_url =
+      if String.ends_with?(callback_url, "?"), do: String.slice(callback_url, 0..-2), else: callback_url
 
     opts = Keyword.put(opts, :redirect_uri, callback_url)
     module = option(conn, :oauth2_module)
@@ -205,9 +208,6 @@ defmodule Ueberauth.Strategy.Slack do
   defp fetch_team(%Plug.Conn{ assigns: %{ ueberauth_failure: _fails }} = conn, _), do: conn
 
   defp fetch_team(conn, token) do
-    auth = conn.private.slack_auth
-    token = conn.private.slack_token
-
     scopes = (token.other_params["scope"] || "")
     |> String.split(",")
 
