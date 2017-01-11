@@ -27,7 +27,7 @@ defmodule Ueberauth.Strategy.Slack do
   @doc false
   def handle_request!(conn) do
     scopes = conn.params["scope"] || option(conn, :default_scope)
-    opts = [ scope: scopes ]
+    opts = [scope: scopes]
     opts =
       if conn.params["state"], do: Keyword.put(opts, :state, conn.params["state"]), else: opts
 
@@ -50,9 +50,9 @@ defmodule Ueberauth.Strategy.Slack do
   # the user id so we can make a query to fetch the user info.
   # So that it is available later to build the auth struct, we put it in the private section of the conn.
   @doc false
-  def handle_callback!(%Plug.Conn{ params: %{ "code" => code } } = conn) do
-    module = option(conn, :oauth2_module)
-    params = [code: code]
+  def handle_callback!(%Plug.Conn{params: %{"code" => code}} = conn) do
+    module  = option(conn, :oauth2_module)
+    params  = [code: code]
     options = %{
       options: [
         client_options: [redirect_uri: callback_url(conn)]
@@ -101,12 +101,11 @@ defmodule Ueberauth.Strategy.Slack do
 
   @doc false
   def credentials(conn) do
-    token = conn.private.slack_token
-    auth = conn.private.slack_auth
-    user = conn.private.slack_user
-
-    scopes = (token.other_params["scope"] || "")
-    |> String.split(",")
+    token        = conn.private.slack_token
+    auth         = conn.private.slack_auth
+    user         = conn.private.slack_user
+    scope_string = (token.other_params["scope"] || "")
+    scopes       = String.split(scope_string, ",")
 
     %Credentials{
       token: token.access_token,
@@ -138,7 +137,7 @@ defmodule Ueberauth.Strategy.Slack do
     image_urls = user["profile"]
     |> Map.keys
     |> Enum.filter(&(&1 =~ ~r/^image_/))
-    |> Enum.map(&({ &1, user["profile"][&1] }))
+    |> Enum.map(&({&1, user["profile"][&1]}))
     |> Enum.into(%{})
 
     %Info{
@@ -170,60 +169,60 @@ defmodule Ueberauth.Strategy.Slack do
   # Before we can fetch the user, we first need to fetch the auth to find out what the user id is.
   defp fetch_auth(conn, token) do
     case OAuth2.AccessToken.post(token, "/auth.test", [token: token.access_token], [{"Content-Type", "application/x-www-form-urlencoded"}]) do
-      { :ok, %OAuth2.Response{status_code: 401, body: _body}} ->
+      {:ok, %OAuth2.Response{status_code: 401, body: _body}} ->
         set_errors!(conn, [error("token", "unauthorized")])
-      { :ok, %OAuth2.Response{status_code: status_code, body: auth} } when status_code in 200..399 ->
+      {:ok, %OAuth2.Response{status_code: status_code, body: auth}} when status_code in 200..399 ->
         if auth["ok"] do
           put_private(conn, :slack_auth, auth)
         else
           set_errors!(conn, [error(auth["error"], auth["error"])])
         end
-      { :error, %OAuth2.Error{reason: reason} } ->
+      {:error, %OAuth2.Error{reason: reason}} ->
         set_errors!(conn, [error("OAuth2", reason)])
     end
   end
 
   # If the call to fetch the auth fails, we're going to have failures already in place.
   # If this happens don't try and fetch the user and just let it fail.
-  defp fetch_user(%Plug.Conn{ assigns: %{ ueberauth_failure: _fails }} = conn, _), do: conn
+  defp fetch_user(%Plug.Conn{assigns: %{ueberauth_failure: _fails}} = conn, _), do: conn
 
   # Given the auth and token we can now fetch the user.
   defp fetch_user(conn, token) do
     auth = conn.private.slack_auth
 
     case OAuth2.AccessToken.post(token, "/users.info", [token: token.access_token, user: auth["user_id"]], [{"Content-Type", "application/x-www-form-urlencoded"}]) do
-      { :ok, %OAuth2.Response{status_code: 401, body: _body}} ->
+      {:ok, %OAuth2.Response{status_code: 401, body: _body}} ->
         set_errors!(conn, [error("token", "unauthorized")])
-      { :ok, %OAuth2.Response{status_code: status_code, body: user} } when status_code in 200..399 ->
+      {:ok, %OAuth2.Response{status_code: status_code, body: user}} when status_code in 200..399 ->
         if user["ok"] do
           put_private(conn, :slack_user, user["user"])
         else
           set_errors!(conn, [error(user["error"], user["error"])])
         end
-      { :error, %OAuth2.Error{reason: reason} } ->
+      {:error, %OAuth2.Error{reason: reason}} ->
         set_errors!(conn, [error("OAuth2", reason)])
     end
   end
 
-  defp fetch_team(%Plug.Conn{ assigns: %{ ueberauth_failure: _fails }} = conn, _), do: conn
+  defp fetch_team(%Plug.Conn{assigns: %{ueberauth_failure: _fails}} = conn, _), do: conn
 
   defp fetch_team(conn, token) do
-    scopes = (token.other_params["scope"] || "")
-    |> String.split(",")
+    scope_string = (token.other_params["scope"] || "")
+    scopes       = String.split(scope_string, ",")
 
     case "team:read" in scopes do
       false -> conn
       true  ->
         case OAuth2.AccessToken.post(token, "/team.info", [token: token.access_token], [{"Content-Type", "application/x-www-form-urlencoded"}]) do
-          { :ok, %OAuth2.Response{status_code: 401, body: _body}} ->
+          {:ok, %OAuth2.Response{status_code: 401, body: _body}} ->
             set_errors!(conn, [error("token", "unauthorized")])
-          { :ok, %OAuth2.Response{status_code: status_code, body: team} } when status_code in 200..399 ->
+          {:ok, %OAuth2.Response{status_code: status_code, body: team}} when status_code in 200..399 ->
             if team["ok"] do
               put_private(conn, :slack_team, team["team"])
             else
               set_errors!(conn, [error(team["error"], team["error"])])
             end
-          { :error, %OAuth2.Error{reason: reason} } ->
+          {:error, %OAuth2.Error{reason: reason}} ->
             set_errors!(conn, [error("OAuth2", reason)])
         end
     end
