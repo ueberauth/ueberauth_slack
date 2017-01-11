@@ -1,4 +1,5 @@
 defmodule Ueberauth.Strategy.Slack.OAuth do
+  @moduledoc false
   use OAuth2.Strategy
 
   @defaults [
@@ -9,20 +10,24 @@ defmodule Ueberauth.Strategy.Slack.OAuth do
   ]
 
   def client(opts \\ []) do
-    opts = Keyword.merge(@defaults, Application.get_env(:ueberauth, Ueberauth.Strategy.Slack.OAuth))
-    |> Keyword.merge(opts)
+    slack_config = Application.get_env(:ueberauth, Ueberauth.Strategy.Slack.OAuth)
+    client_opts =
+      @defaults
+      |> Keyword.merge(slack_config)
+      |> Keyword.merge(opts)
 
     OAuth2.Client.new(opts)
   end
 
   def authorize_url!(params \\ [], opts \\ []) do
-    client(opts)
+    opts
+    |> client
     |> OAuth2.Client.authorize_url!(params)
   end
 
   def get_token!(params \\ [], options \\ %{}) do
-    headers = Dict.get(options, :headers, [])
-    options = Dict.get(options, :options, [])
+    headers        = Dict.get(options, :headers, [])
+    options        = Dict.get(options, :options, [])
     client_options = Dict.get(options, :client_options, [])
     OAuth2.Client.get_token!(client(client_options), params, headers, options)
   end

@@ -27,7 +27,8 @@ defmodule UeberauthSlack.Mixfile do
       {:oauth2, "0.6.0"},
       {:ueberauth, "~> 0.4"},
 
-      # Docs dependencies
+      # dev/test dependencies
+      {:credo, "~> 0.5", only: [:dev, :test]},
       {:earmark, ">= 0.0.0", only: :dev},
       {:ex_doc, ">= 0.0.0", only: :dev},
     ]
