@@ -168,7 +168,7 @@ defmodule Ueberauth.Strategy.Slack do
 
   # Before we can fetch the user, we first need to fetch the auth to find out what the user id is.
   defp fetch_auth(conn, token) do
-    case OAuth2.AccessToken.post(token, "/auth.test", [token: token.access_token], [{"Content-Type", "application/x-www-form-urlencoded"}]) do
+    case Ueberauth.Strategy.Slack.OAuth.get(token, "/auth.test") do
       {:ok, %OAuth2.Response{status_code: 401, body: _body}} ->
         set_errors!(conn, [error("token", "unauthorized")])
       {:ok, %OAuth2.Response{status_code: status_code, body: auth}} when status_code in 200..399 ->
@@ -190,7 +190,7 @@ defmodule Ueberauth.Strategy.Slack do
   defp fetch_user(conn, token) do
     auth = conn.private.slack_auth
 
-    case OAuth2.AccessToken.post(token, "/users.info", [token: token.access_token, user: auth["user_id"]], [{"Content-Type", "application/x-www-form-urlencoded"}]) do
+    case Ueberauth.Strategy.Slack.OAuth.get(token, "/users.info", %{user: auth["user_id"]}) do
       {:ok, %OAuth2.Response{status_code: 401, body: _body}} ->
         set_errors!(conn, [error("token", "unauthorized")])
       {:ok, %OAuth2.Response{status_code: status_code, body: user}} when status_code in 200..399 ->
@@ -213,7 +213,7 @@ defmodule Ueberauth.Strategy.Slack do
     case "team:read" in scopes do
       false -> conn
       true  ->
-        case OAuth2.AccessToken.post(token, "/team.info", [token: token.access_token], [{"Content-Type", "application/x-www-form-urlencoded"}]) do
+        case Ueberauth.Strategy.Slack.OAuth.get(token, "/team.info") do
           {:ok, %OAuth2.Response{status_code: 401, body: _body}} ->
             set_errors!(conn, [error("token", "unauthorized")])
           {:ok, %OAuth2.Response{status_code: status_code, body: team}} when status_code in 200..399 ->

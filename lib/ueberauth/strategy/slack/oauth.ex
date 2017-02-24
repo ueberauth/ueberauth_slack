@@ -19,6 +19,14 @@ defmodule Ueberauth.Strategy.Slack.OAuth do
     OAuth2.Client.new(client_opts)
   end
 
+  def get(token, url, params \\ %{}, headers \\ [], opts \\ []) do
+    url = [token: token]
+    |> client()
+    |> to_url(url, Map.put(params, "token", token.access_token))
+
+    OAuth2.Client.get(client, url, headers, opts)
+  end
+
   def authorize_url!(params \\ [], opts \\ []) do
     opts
     |> client
@@ -44,5 +52,24 @@ defmodule Ueberauth.Strategy.Slack.OAuth do
     |> put_param("client_secret", client.client_secret)
     |> put_header("Accept", "application/json")
     |> OAuth2.Strategy.AuthCode.get_token(params, headers)
+  end
+
+  defp endpoint("/" <> _path = endpoint, client), do: client.site <> endpoint
+  defp endpoint(endpoint, _client), do: endpoint
+
+  defp to_url(client, endpoint, params \\ nil) do
+    endpoint =
+      client
+      |> Map.get(endpoint, endpoint)
+      |> endpoint(client)
+
+    endpoint =
+      if params do
+        endpoint <> "?" <> URI.encode_query(params)
+      else
+        endpoint
+      end
+
+    endpoint
   end
 end
