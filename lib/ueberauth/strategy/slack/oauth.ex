@@ -39,10 +39,11 @@ defmodule Ueberauth.Strategy.Slack.OAuth do
   end
 
   def get_token(client, params, headers) do
-    client
-    |> put_param("client_secret", client.client_secret)
-    |> put_header("Accept", "application/json")
-    |> OAuth2.Strategy.AuthCode.get_token(params, headers)
+    client =
+      client
+      |> put_param("client_secret", client.client_secret)
+      |> put_header("Accept", "application/json")
+      |> OAuth2.Strategy.AuthCode.get_token(params, headers)
 
     client.token
   end
