@@ -1,4 +1,3 @@
-require IEx
 defmodule Ueberauth.Strategy.Slack.OAuth do
   @moduledoc false
   use OAuth2.Strategy
