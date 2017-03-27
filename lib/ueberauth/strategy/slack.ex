@@ -189,18 +189,24 @@ defmodule Ueberauth.Strategy.Slack do
   # Given the auth and token we can now fetch the user.
   defp fetch_user(conn, token) do
     auth = conn.private.slack_auth
+    scope_string = (token.other_params["scope"] || "")
+    scopes       = String.split(scope_string, ",")
 
-    case Ueberauth.Strategy.Slack.OAuth.get(token, "/users.info", %{user: auth["user_id"]}) do
-      {:ok, %OAuth2.Response{status_code: 401, body: _body}} ->
-        set_errors!(conn, [error("token", "unauthorized")])
-      {:ok, %OAuth2.Response{status_code: status_code, body: user}} when status_code in 200..399 ->
-        if user["ok"] do
-          put_private(conn, :slack_user, user["user"])
-        else
-          set_errors!(conn, [error(user["error"], user["error"])])
+    case "users:read" in scopes do
+      false -> conn
+      true ->
+        case Ueberauth.Strategy.Slack.OAuth.get(token, "/users.info", %{user: auth["user_id"]}) do
+          {:ok, %OAuth2.Response{status_code: 401, body: _body}} ->
+            set_errors!(conn, [error("token", "unauthorized")])
+          {:ok, %OAuth2.Response{status_code: status_code, body: user}} when status_code in 200..399 ->
+            if user["ok"] do
+              put_private(conn, :slack_user, user["user"])
+            else
+              set_errors!(conn, [error(user["error"], user["error"])])
+            end
+          {:error, %OAuth2.Error{reason: reason}} ->
+            set_errors!(conn, [error("OAuth2", reason)])
         end
-      {:error, %OAuth2.Error{reason: reason}} ->
-        set_errors!(conn, [error("OAuth2", reason)])
     end
   end
 
