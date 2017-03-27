@@ -16,7 +16,7 @@ defmodule Ueberauth.Strategy.Slack.OAuth do
       |> Keyword.merge(slack_config)
       |> Keyword.merge(opts)
 
-    OAuth2.Client.new(opts)
+    OAuth2.Client.new(client_opts)
   end
 
   def authorize_url!(params \\ [], opts \\ []) do
