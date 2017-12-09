@@ -24,7 +24,7 @@ defmodule UeberauthSlack.Mixfile do
 
   defp deps do
     [
-      {:oauth2, "0.6.0"},
+      {:oauth2, "~> 0.8.0"},
       {:ueberauth, "~> 0.4"},
 
       # dev/test dependencies
