@@ -103,7 +103,7 @@ defmodule Ueberauth.Strategy.Slack do
   def credentials(conn) do
     token        = conn.private.slack_token
     auth         = conn.private.slack_auth
-    user         = conn.private.slack_user
+    user         = conn.private[:slack_user]
     scope_string = (token.other_params["scope"] || "")
     scopes       = String.split(scope_string, ",")
 
@@ -114,27 +114,21 @@ defmodule Ueberauth.Strategy.Slack do
       token_type: token.token_type,
       expires: !!token.expires_at,
       scopes: scopes,
-      other: %{
+      other: Map.merge(%{
         user: auth["user"],
         user_id: auth["user_id"],
         team: auth["team"],
         team_id: auth["team_id"],
         team_url: auth["url"],
-        has_2fa: user["has_2fa"],
-        is_admin: user["is_admin"],
-        is_owner: user["is_owner"],
-        is_primary_owner: user["is_primary_owner"],
-        is_restricted: user["is_restricted"],
-        is_ultra_restricted: user["is_ultra_restricted"],
-      }
+      }, user_credentials(user))
     }
   end
 
   @doc false
   def info(conn) do
-    user = conn.private.slack_user
+    user = conn.private[:slack_user]
     auth = conn.private.slack_auth
-    image_urls = user["profile"]
+    image_urls = (user["profile"] || %{})
     |> Map.keys
     |> Enum.filter(&(&1 =~ ~r/^image_/))
     |> Enum.map(&({&1, user["profile"][&1]}))
@@ -164,6 +158,16 @@ defmodule Ueberauth.Strategy.Slack do
         team: conn.private[:slack_team]
       }
     }
+  end
+
+  defp user_credentials(nil), do: %{}
+  defp user_credentials(user) do
+    %{has_2fa: user["has_2fa"],
+      is_admin: user["is_admin"],
+      is_owner: user["is_owner"],
+      is_primary_owner: user["is_primary_owner"],
+      is_restricted: user["is_restricted"],
+      is_ultra_restricted: user["is_ultra_restricted"]}
   end
 
   # Before we can fetch the user, we first need to fetch the auth to find out what the user id is.
