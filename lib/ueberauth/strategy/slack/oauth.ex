@@ -27,7 +27,7 @@ defmodule Ueberauth.Strategy.Slack.OAuth do
     |> client()
     |> to_url(url, Map.put(params, "token", token.access_token))
 
-    OAuth2.Client.get(client, url, headers, opts)
+    OAuth2.Client.get(client(), url, headers, opts)
   end
 
   def authorize_url!(params \\ [], opts \\ []) do
@@ -62,7 +62,7 @@ defmodule Ueberauth.Strategy.Slack.OAuth do
   defp endpoint("/" <> _path = endpoint, client), do: client.site <> endpoint
   defp endpoint(endpoint, _client), do: endpoint
 
-  defp to_url(client, endpoint, params \\ nil) do
+  defp to_url(client, endpoint, params) do
     endpoint =
       client
       |> Map.get(endpoint, endpoint)
