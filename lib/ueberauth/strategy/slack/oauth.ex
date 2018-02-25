@@ -1,4 +1,6 @@
 defmodule Ueberauth.Strategy.Slack.OAuth do
+  @oauth2_client Application.get_env(:ueberauth, :oauth2_client)
+
   @moduledoc false
   use OAuth2.Strategy
 
@@ -11,6 +13,7 @@ defmodule Ueberauth.Strategy.Slack.OAuth do
 
   def client(opts \\ []) do
     slack_config = Application.get_env(:ueberauth, Ueberauth.Strategy.Slack.OAuth)
+
     client_opts =
       @defaults
       |> Keyword.merge(slack_config)
