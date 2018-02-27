@@ -38,13 +38,6 @@ defmodule Ueberauth.Strategy.Slack.OAuth do
     options        = Dict.get(options, :options, [])
     client_options = Dict.get(options, :client_options, [])
 
-    config = Application.get_env(:ueberauth, Ueberauth)
-    redirect_uri = config |> Keyword.get(:redirect_uri)
-
-    if redirect_uri do
-      client_options ++ [redirect_uri: redirect_uri]
-    end
-
     client = OAuth2.Client.get_token!(client(client_options), params, headers, options)
 
     client.token
