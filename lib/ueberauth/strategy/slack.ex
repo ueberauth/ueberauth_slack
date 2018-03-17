@@ -103,7 +103,7 @@ defmodule Ueberauth.Strategy.Slack do
   def credentials(conn) do
     token        = conn.private.slack_token
     auth         = conn.private.slack_auth
-    user         = conn.private.slack_user
+    user         = conn.private[:slack_user]
     scope_string = (token.other_params["scope"] || "")
     scopes       = String.split(scope_string, ",")
 
@@ -114,27 +114,21 @@ defmodule Ueberauth.Strategy.Slack do
       token_type: token.token_type,
       expires: !!token.expires_at,
       scopes: scopes,
-      other: %{
+      other: Map.merge(%{
         user: auth["user"],
         user_id: auth["user_id"],
         team: auth["team"],
         team_id: auth["team_id"],
         team_url: auth["url"],
-        has_2fa: user["has_2fa"],
-        is_admin: user["is_admin"],
-        is_owner: user["is_owner"],
-        is_primary_owner: user["is_primary_owner"],
-        is_restricted: user["is_restricted"],
-        is_ultra_restricted: user["is_ultra_restricted"],
-      }
+      }, user_credentials(user))
     }
   end
 
   @doc false
   def info(conn) do
-    user = conn.private.slack_user
+    user = conn.private[:slack_user]
     auth = conn.private.slack_auth
-    image_urls = user["profile"]
+    image_urls = (user["profile"] || %{})
     |> Map.keys
     |> Enum.filter(&(&1 =~ ~r/^image_/))
     |> Enum.map(&({&1, user["profile"][&1]}))
@@ -166,6 +160,16 @@ defmodule Ueberauth.Strategy.Slack do
     }
   end
 
+  defp user_credentials(nil), do: %{}
+  defp user_credentials(user) do
+    %{has_2fa: user["has_2fa"],
+      is_admin: user["is_admin"],
+      is_owner: user["is_owner"],
+      is_primary_owner: user["is_primary_owner"],
+      is_restricted: user["is_restricted"],
+      is_ultra_restricted: user["is_ultra_restricted"]}
+  end
+
   # Before we can fetch the user, we first need to fetch the auth to find out what the user id is.
   defp fetch_auth(conn, token) do
     case Ueberauth.Strategy.Slack.OAuth.get(token, "/auth.test") do
@@ -189,18 +193,24 @@ defmodule Ueberauth.Strategy.Slack do
   # Given the auth and token we can now fetch the user.
   defp fetch_user(conn, token) do
     auth = conn.private.slack_auth
+    scope_string = (token.other_params["scope"] || "")
+    scopes       = String.split(scope_string, ",")
 
-    case Ueberauth.Strategy.Slack.OAuth.get(token, "/users.info", %{user: auth["user_id"]}) do
-      {:ok, %OAuth2.Response{status_code: 401, body: _body}} ->
-        set_errors!(conn, [error("token", "unauthorized")])
-      {:ok, %OAuth2.Response{status_code: status_code, body: user}} when status_code in 200..399 ->
-        if user["ok"] do
-          put_private(conn, :slack_user, user["user"])
-        else
-          set_errors!(conn, [error(user["error"], user["error"])])
+    case "users:read" in scopes do
+      false -> conn
+      true ->
+        case Ueberauth.Strategy.Slack.OAuth.get(token, "/users.info", %{user: auth["user_id"]}) do
+          {:ok, %OAuth2.Response{status_code: 401, body: _body}} ->
+            set_errors!(conn, [error("token", "unauthorized")])
+          {:ok, %OAuth2.Response{status_code: status_code, body: user}} when status_code in 200..399 ->
+            if user["ok"] do
+              put_private(conn, :slack_user, user["user"])
+            else
+              set_errors!(conn, [error(user["error"], user["error"])])
+            end
+          {:error, %OAuth2.Error{reason: reason}} ->
+            set_errors!(conn, [error("OAuth2", reason)])
         end
-      {:error, %OAuth2.Error{reason: reason}} ->
-        set_errors!(conn, [error("OAuth2", reason)])
     end
   end
 
