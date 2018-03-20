@@ -53,7 +53,7 @@ defmodule Ueberauth.Strategy.Slack do
   def handle_callback!(%Plug.Conn{params: %{"code" => code}} = conn) do
     module  = option(conn, :oauth2_module)
     params  = [code: code]
-    redirect_uri = conn |> get_redirect_uri
+    redirect_uri = get_redirect_uri(conn)
     options = %{
       options: [
         client_options: [redirect_uri: redirect_uri]
@@ -248,11 +248,12 @@ defmodule Ueberauth.Strategy.Slack do
 
   defp get_redirect_uri(%Plug.Conn{} = conn) do
     config = Application.get_env(:ueberauth, Ueberauth)
-    redirect_uri = config |> Keyword.get(:redirect_uri)
+    redirect_uri = Keyword.get(config, :redirect_uri)
 
-    case is_nil(redirect_uri) do
-      true -> callback_url(conn)
-      false -> redirect_uri
+    if is_nil(redirect_uri) do
+      callback_url(conn)
+    else
+      redirect_uri
     end
   end
 end
