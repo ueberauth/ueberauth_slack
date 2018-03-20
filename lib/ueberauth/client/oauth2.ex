@@ -1,8 +1,6 @@
 defmodule Ueberauth.Client.OAuth2 do
-  def get_token!(_, params \\ [], _ \\ [], _ \\ []) do
-    [code: code] = params
-
-    case code  do
+  def get_token!(_, [code: code] \\ [], _ \\ [], _ \\ []) do
+    case code do
       "abc123" -> %{
         token: %OAuth2.AccessToken{
           access_token: nil,
