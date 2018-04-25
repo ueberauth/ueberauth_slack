@@ -42,9 +42,9 @@ defmodule Ueberauth.Strategy.Slack.OAuth do
 
     created_client = client(client_options)
 
-    %{token: token} = @oauth2_client.get_token!(created_client, params, headers, opts)
-
-    token
+    created_client
+    |> @oauth2_client.get_token!(params, headers, opts)
+    |> Map.get(:token)
   end
 
   # Strategy Callbacks
