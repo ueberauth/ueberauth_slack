@@ -37,7 +37,9 @@ defmodule Ueberauth.Strategy.Slack.OAuth do
     headers        = Dict.get(options, :headers, [])
     options        = Dict.get(options, :options, [])
     client_options = Dict.get(options, :client_options, [])
+
     client = OAuth2.Client.get_token!(client(client_options), params, headers, options)
+
     client.token
   end
 
