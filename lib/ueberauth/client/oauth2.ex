@@ -9,7 +9,7 @@ defmodule Ueberauth.Client.OAuth2 do
           refresh_token: nil,
           token_type: "Bearer"
         } 
-      }    
+      }
       "xyz456" -> %{
         token: %OAuth2.AccessToken{
           access_token: "asdf-1234-klsc",
