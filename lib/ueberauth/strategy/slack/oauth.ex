@@ -24,7 +24,7 @@ defmodule Ueberauth.Strategy.Slack.OAuth do
     |> client()
     |> to_url(url, Map.put(params, "token", token.access_token))
 
-    OAuth2.Client.get(client, url, headers, opts)
+    OAuth2.Client.get(client(), url, headers, opts)
   end
 
   def authorize_url!(params \\ [], opts \\ []) do
@@ -34,9 +34,9 @@ defmodule Ueberauth.Strategy.Slack.OAuth do
   end
 
   def get_token!(params \\ [], options \\ %{}) do
-    headers        = Dict.get(options, :headers, [])
-    options        = Dict.get(options, :options, [])
-    client_options = Dict.get(options, :client_options, [])
+    headers        = Map.get(options, :headers, [])
+    options        = Map.get(options, :options, [])
+    client_options = Map.get(options, :client_options, [])
 
     client = OAuth2.Client.get_token!(client(client_options), params, headers, options)
 
@@ -60,18 +60,18 @@ defmodule Ueberauth.Strategy.Slack.OAuth do
   defp endpoint(endpoint, _client), do: endpoint
 
   defp to_url(client, endpoint, params \\ nil) do
-    endpoint =
+    client_endpoint =
       client
       |> Map.get(endpoint, endpoint)
       |> endpoint(client)
 
-    endpoint =
+    final_endpoint =
       if params do
-        endpoint <> "?" <> URI.encode_query(params)
+        client_endpoint <> "?" <> URI.encode_query(params)
       else
-        endpoint
+        client_endpoint
       end
 
-    endpoint
+    final_endpoint
   end
 end
