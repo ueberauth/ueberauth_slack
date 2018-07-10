@@ -1,3 +1,10 @@
+# v 0.5.0
+
+* Pin OAuth2 to 0.8.0
+* Configurable `redirect_uri`
+* Fix bug with OAuth and `client_opts`
+* Fix Slack bug with parsing `users:read` scope
+
 # v 0.4.1
 
 * Avoid exceptions when team is missing

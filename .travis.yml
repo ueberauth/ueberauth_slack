@@ -1,0 +1,15 @@
+language: elixir
+elixir:
+  - 1.6
+otp_release:
+  - 19.3
+  - 20.1
+sudo: false
+env:
+  global:
+    - ELIXIR_ASSERT_TIMEOUT=2000
+before_script:
+  - mix deps.get
+script:
+  - mix test
+
