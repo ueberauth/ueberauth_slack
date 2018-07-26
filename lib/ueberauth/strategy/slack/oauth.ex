@@ -36,8 +36,8 @@ defmodule Ueberauth.Strategy.Slack.OAuth do
   def get_token!(params \\ [], options \\ %{}) do
     headers        = Map.get(options, :headers, [])
     options        = Map.get(options, :options, [])
-    client_options = Map.get(options, :client_options, [])
-
+    client_options = Keyword.get(options, :client_options, [])
+    
     client = OAuth2.Client.get_token!(client(client_options), params, headers, options)
 
     client.token
