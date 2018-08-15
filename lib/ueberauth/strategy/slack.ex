@@ -253,7 +253,7 @@ defmodule Ueberauth.Strategy.Slack do
   end
 
   defp option(conn, key) do
-    Map.get(options(conn), key, Map.get(default_options(), key))
+    Keyword.get(options(conn), key, Keyword.get(default_options(), key))
   end
 
   defp get_redirect_uri(%Plug.Conn{} = conn) do
