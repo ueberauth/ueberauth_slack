@@ -67,6 +67,7 @@ defmodule Ueberauth.Strategy.Slack do
       conn
       |> store_token(token)
       |> fetch_auth(token)
+      |> fetch_identity(token)
       |> fetch_user(token)
       |> fetch_team(token)
     end
@@ -89,6 +90,7 @@ defmodule Ueberauth.Strategy.Slack do
   def handle_cleanup!(conn) do
     conn
     |> put_private(:slack_auth, nil)
+    |> put_private(:slack_identity, nil)
     |> put_private(:slack_user, nil)
     |> put_private(:slack_token, nil)
   end
@@ -102,11 +104,12 @@ defmodule Ueberauth.Strategy.Slack do
 
   @doc false
   def credentials(conn) do
-    token        = conn.private.slack_token
-    auth         = conn.private.slack_auth
-    user         = conn.private[:slack_user]
-    scope_string = (token.other_params["scope"] || "")
-    scopes       = String.split(scope_string, ",")
+    token         = conn.private.slack_token
+    auth          = conn.private[:slack_auth]
+    identity      = conn.private[:slack_identity]
+    user          = conn.private[:slack_user]
+    scope_string  = (token.other_params["scope"] || "")
+    scopes        = String.split(scope_string, ",")
 
     %Credentials{
       token: token.access_token,
@@ -116,11 +119,11 @@ defmodule Ueberauth.Strategy.Slack do
       expires: !!token.expires_at,
       scopes: scopes,
       other: Map.merge(%{
-        user: auth["user"],
-        user_id: auth["user_id"],
-        team: auth["team"],
-        team_id: auth["team_id"],
-        team_url: auth["url"],
+        user: get_in(auth, ["user"]),
+        user_id: get_in(auth, ["user_id"]) || get_in(identity, ["user", "id"]),
+        team: get_in(auth, ["team"]) || get_in(identity, ["team", "name"]),
+        team_id: get_in(auth, ["team_id"]) || get_in(identity, ["team", "id"]),
+        team_url: get_in(auth, ["url"]),
       }, user_credentials(user))
     }
   end
@@ -128,22 +131,23 @@ defmodule Ueberauth.Strategy.Slack do
   @doc false
   def info(conn) do
     user = conn.private[:slack_user]
-    auth = conn.private.slack_auth
-    image_urls = (user["profile"] || %{})
+    auth = conn.private[:slack_auth]
+    identity = conn.private[:slack_identity]
+    image_urls = (get_in(user, ["profile"]) || %{})
     |> Map.keys
     |> Enum.filter(&(&1 =~ ~r/^image_/))
     |> Enum.map(&({&1, user["profile"][&1]}))
     |> Enum.into(%{})
 
     %Info{
-      name: name_from_user(user),
-      nickname: user["name"],
-      email: user["profile"]["email"],
-      image: user["profile"]["image_48"],
+      name: name_from_user(user) || get_in(identity, ["user", "name"]),
+      nickname: get_in(user, ["name"]),
+      email: get_in(user, ["profile", "email"]) || get_in(identity, ["user", "email"]),
+      image: get_in(user, ["profile", "image_48"]),
       urls: Map.merge(
         image_urls,
         %{
-          team_url: auth["url"],
+          team_url: get_in(auth, ["url"]),
         }
       )
     }
@@ -154,6 +158,7 @@ defmodule Ueberauth.Strategy.Slack do
     %Extra {
       raw_info: %{
         auth: conn.private[:slack_auth],
+        identity: conn.private[:slack_identity],
         token: conn.private[:slack_token],
         user: conn.private[:slack_user],
         team: conn.private[:slack_team]
@@ -173,17 +178,50 @@ defmodule Ueberauth.Strategy.Slack do
 
   # Before we can fetch the user, we first need to fetch the auth to find out what the user id is.
   defp fetch_auth(conn, token) do
+    scope_string = (token.other_params["scope"] || "")
+    scopes       = String.split(scope_string, ",")
+
     case Ueberauth.Strategy.Slack.OAuth.get(token, "/auth.test") do
-      {:ok, %OAuth2.Response{status_code: 401, body: _body}} ->
+      {:ok, %OAuth2.Response{status_code: 401, body: body}} ->
         set_errors!(conn, [error("token", "unauthorized")])
       {:ok, %OAuth2.Response{status_code: status_code, body: auth}} when status_code in 200..399 ->
-        if auth["ok"] do
-          put_private(conn, :slack_auth, auth)
-        else
-          set_errors!(conn, [error(auth["error"], auth["error"])])
+        cond do
+          auth["ok"] ->
+            put_private(conn, :slack_auth, auth)
+          auth["error"] == "invalid_auth" && Enum.member?(scopes, "identity.basic")->
+            # If the token has only the "identity.basic" scope then it may error
+            # at the "auth.test" endpoint but still succeed at the
+            # "identity.basic" endpoint.
+            # In this case we rely on fetch_identity to set the error if the
+            # token is invalid.
+            conn
+          true ->
+            set_errors!(conn, [error(auth["error"], auth["error"])])
         end
       {:error, %OAuth2.Error{reason: reason}} ->
         set_errors!(conn, [error("OAuth2", reason)])
+    end
+  end
+
+  defp fetch_identity(conn, token) do
+    scope_string = (token.other_params["scope"] || "")
+    scopes       = String.split(scope_string, ",")
+
+    case "identity.basic" in scopes do
+      false -> conn
+      true ->
+        case Ueberauth.Strategy.Slack.OAuth.get(token, "/users.identity") do
+          {:ok, %OAuth2.Response{status_code: 401, body: body}} ->
+            set_errors!(conn, [error("token", "unauthorized")])
+          {:ok, %OAuth2.Response{status_code: status_code, body: identity}} when status_code in 200..399 ->
+            if identity["ok"] do
+              put_private(conn, :slack_identity, identity)
+            else
+              set_errors!(conn, [error(identity["error"], identity["error"])])
+            end
+          {:error, %OAuth2.Error{reason: reason}} ->
+            set_errors!(conn, [error("OAuth2", reason)])
+        end
     end
   end
 
@@ -193,13 +231,13 @@ defmodule Ueberauth.Strategy.Slack do
 
   # Given the auth and token we can now fetch the user.
   defp fetch_user(conn, token) do
-    auth = conn.private.slack_auth
     scope_string = (token.other_params["scope"] || "")
     scopes       = String.split(scope_string, ",")
 
     case "users:read" in scopes do
       false -> conn
       true ->
+        auth = conn.private.slack_auth
         case Ueberauth.Strategy.Slack.OAuth.get(token, "/users.info", %{user: auth["user_id"]}) do
           {:ok, %OAuth2.Response{status_code: 401, body: _body}} ->
             set_errors!(conn, [error("token", "unauthorized")])
@@ -241,6 +279,7 @@ defmodule Ueberauth.Strategy.Slack do
 
   # Fetch the name to use. We try to start with the most specific name avaialble and
   # fallback to the least.
+  defp name_from_user(nil), do: nil
   defp name_from_user(user) do
     [
       user["profile"]["real_name_normalized"],
