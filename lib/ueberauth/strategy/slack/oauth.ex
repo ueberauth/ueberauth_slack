@@ -11,18 +11,22 @@ defmodule Ueberauth.Strategy.Slack.OAuth do
 
   def client(opts \\ []) do
     slack_config = Application.get_env(:ueberauth, Ueberauth.Strategy.Slack.OAuth)
+
     client_opts =
       @defaults
       |> Keyword.merge(slack_config)
       |> Keyword.merge(opts)
 
-    OAuth2.Client.new(client_opts)
+    client_opts
+    |> OAuth2.Client.new()
+    |> OAuth2.Client.put_serializer("application/json", Jason)
   end
 
   def get(token, url, params \\ %{}, headers \\ [], opts \\ []) do
-    url = [token: token]
-    |> client()
-    |> to_url(url, Map.put(params, "token", token.access_token))
+    url =
+      [token: token]
+      |> client()
+      |> to_url(url, Map.put(params, "token", token.access_token))
 
     OAuth2.Client.get(client(), url, headers, opts)
   end
@@ -34,10 +38,10 @@ defmodule Ueberauth.Strategy.Slack.OAuth do
   end
 
   def get_token!(params \\ [], options \\ %{}) do
-    headers        = Map.get(options, :headers, [])
-    options        = Map.get(options, :options, [])
+    headers = Map.get(options, :headers, [])
+    options = Map.get(options, :options, [])
     client_options = Keyword.get(options, :client_options, [])
-    
+
     client = OAuth2.Client.get_token!(client(client_options), params, headers, options)
 
     client.token
