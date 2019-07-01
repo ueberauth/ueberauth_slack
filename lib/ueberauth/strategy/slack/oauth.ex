@@ -63,7 +63,7 @@ defmodule Ueberauth.Strategy.Slack.OAuth do
   defp endpoint("/" <> _path = endpoint, client), do: client.site <> endpoint
   defp endpoint(endpoint, _client), do: endpoint
 
-  defp to_url(client, endpoint, params \\ nil) do
+  defp to_url(client, endpoint, params) do
     client_endpoint =
       client
       |> Map.get(endpoint, endpoint)

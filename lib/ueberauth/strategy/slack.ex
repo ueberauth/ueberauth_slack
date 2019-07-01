@@ -182,7 +182,7 @@ defmodule Ueberauth.Strategy.Slack do
     scopes       = String.split(scope_string, ",")
 
     case Ueberauth.Strategy.Slack.OAuth.get(token, "/auth.test") do
-      {:ok, %OAuth2.Response{status_code: 401, body: body}} ->
+      {:ok, %OAuth2.Response{status_code: 401, body: _body}} ->
         set_errors!(conn, [error("token", "unauthorized")])
       {:ok, %OAuth2.Response{status_code: status_code, body: auth}} when status_code in 200..399 ->
         cond do
@@ -211,7 +211,7 @@ defmodule Ueberauth.Strategy.Slack do
       false -> conn
       true ->
         case Ueberauth.Strategy.Slack.OAuth.get(token, "/users.identity") do
-          {:ok, %OAuth2.Response{status_code: 401, body: body}} ->
+          {:ok, %OAuth2.Response{status_code: 401, body: _body}} ->
             set_errors!(conn, [error("token", "unauthorized")])
           {:ok, %OAuth2.Response{status_code: status_code, body: identity}} when status_code in 200..399 ->
             if identity["ok"] do
