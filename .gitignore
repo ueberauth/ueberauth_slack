@@ -4,3 +4,6 @@
 erl_crash.dump
 *.ez
 /doc
+
+ ### VS Code ###
+.elixir_ls 

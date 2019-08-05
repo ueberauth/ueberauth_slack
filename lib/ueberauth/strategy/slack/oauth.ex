@@ -17,9 +17,11 @@ defmodule Ueberauth.Strategy.Slack.OAuth do
       |> Keyword.merge(slack_config)
       |> Keyword.merge(opts)
 
+    json_library = Ueberauth.json_library()
+
     client_opts
     |> OAuth2.Client.new()
-    |> OAuth2.Client.put_serializer("application/json", Jason)
+    |> OAuth2.Client.put_serializer("application/json", json_library)
   end
 
   def get(token, url, params \\ %{}, headers \\ [], opts \\ []) do
