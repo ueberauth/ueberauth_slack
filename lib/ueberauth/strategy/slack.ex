@@ -123,6 +123,7 @@ defmodule Ueberauth.Strategy.Slack do
         user_id: get_in(auth, ["user_id"]) || get_in(identity, ["user", "id"]),
         team: get_in(auth, ["team"]) || get_in(identity, ["team", "name"]),
         team_id: get_in(auth, ["team_id"]) || get_in(identity, ["team", "id"]),
+        team_domain: get_in(identity, ["team", "domain"]),
         team_url: get_in(auth, ["url"]),
       }, user_credentials(user))
     }
@@ -133,23 +134,30 @@ defmodule Ueberauth.Strategy.Slack do
     user = conn.private[:slack_user]
     auth = conn.private[:slack_auth]
     identity = conn.private[:slack_identity]
-    image_urls = (get_in(user, ["profile"]) || %{})
+
+    profile = (get_in(user, ["profile"]) || get_in(identity, ["user"]) || %{})
+    image_urls = profile
     |> Map.keys
     |> Enum.filter(&(&1 =~ ~r/^image_/))
-    |> Enum.map(&({&1, user["profile"][&1]}))
-    |> Enum.into(%{})
+    |> Enum.into(%{}, &({&1, profile[&1]}))
+
+    team_image_urls = (identity || %{})
+                      |> Map.get("team", %{})
+                      |> Enum.filter(fn {key, value} -> (key =~ ~r/^image_/) end)
+                      |> Enum.into(%{}, fn {key, value} -> {"team_#{key}", value} end)
 
     %Info{
       name: name_from_user(user) || get_in(identity, ["user", "name"]),
       nickname: get_in(user, ["name"]),
-      email: get_in(user, ["profile", "email"]) || get_in(identity, ["user", "email"]),
-      image: get_in(user, ["profile", "image_48"]),
-      urls: Map.merge(
-        image_urls,
-        %{
-          team_url: get_in(auth, ["url"]),
-        }
-      )
+      email: get_in(profile, ["email"]),
+      image: get_in(profile, ["image_48"]),
+      urls: image_urls
+            |> Map.merge(team_image_urls)
+            |> Map.merge(
+              %{
+                team_url: get_in(auth, ["url"]),
+              }
+            )
     }
   end
 
