@@ -14,7 +14,7 @@ defmodule Ueberauth.Strategy.Slack do
     providers: [
       slack: { Ueberauth.Strategy.Slack, [uid_field: :nickname, default_scope: "users:read,users:write"] }
     ]
-  
+  ```
   """
   use Ueberauth.Strategy, uid_field: :email,
                           default_scope: "users:read",
