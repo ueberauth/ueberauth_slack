@@ -8,12 +8,13 @@ defmodule Ueberauth.Strategy.Slack do
   * `default_scope` - The scope to request by default from slack (permissions). Default "users:read"
   * `oauth2_module` - The OAuth2 module to use. Default Ueberauth.Strategy.Slack.OAuth
 
-  ````elixir
+  ```elixir
 
   config :ueberauth, Ueberauth,
     providers: [
       slack: { Ueberauth.Strategy.Slack, [uid_field: :nickname, default_scope: "users:read,users:write"] }
     ]
+  ```
   """
   use Ueberauth.Strategy, uid_field: :email,
                           default_scope: "users:read",
