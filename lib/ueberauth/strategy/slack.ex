@@ -182,7 +182,7 @@ defmodule Ueberauth.Strategy.Slack do
     team_image_urls =
       (identity || %{})
       |> Map.get("team", %{})
-      |> Enum.filter(fn {key, value} -> key =~ ~r/^image_/ end)
+      |> Enum.filter(fn {key, _value} -> key =~ ~r/^image_/ end)
       |> Enum.into(%{}, fn {key, value} -> {"team_#{key}", value} end)
 
     %Info{
