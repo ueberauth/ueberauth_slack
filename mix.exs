@@ -31,7 +31,7 @@ defmodule UeberauthSlack.Mixfile do
       {:jason, "~> 1.0"},
 
       # dev/test dependencies
-      {:credo, "~> 0.5", only: [:dev, :test]},
+      {:credo, ">= 0.0.0", only: [:dev, :test], runtime: false},
       {:earmark, ">= 0.0.0", only: :dev},
       {:ex_doc, "~> 0.19", only: :dev}
     ]
