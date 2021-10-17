@@ -243,21 +243,25 @@ defmodule Ueberauth.Strategy.Slack do
         conn
 
       true ->
-        case Ueberauth.Strategy.Slack.OAuth.get(token, "/users.identity") do
-          {:ok, %OAuth2.Response{status_code: 401, body: _body}} ->
-            set_errors!(conn, [error("token", "unauthorized")])
+        get_users_identity(conn, token)
+    end
+  end
 
-          {:ok, %OAuth2.Response{status_code: status_code, body: identity}}
-          when status_code in 200..399 ->
-            if identity["ok"] do
-              put_private(conn, :slack_identity, identity)
-            else
-              set_errors!(conn, [error(identity["error"], identity["error"])])
-            end
+  defp get_users_identity(conn, token) do
+    case Ueberauth.Strategy.Slack.OAuth.get(token, "/users.identity") do
+      {:ok, %OAuth2.Response{status_code: 401, body: _body}} ->
+        set_errors!(conn, [error("token", "unauthorized")])
 
-          {:error, %OAuth2.Error{reason: reason}} ->
-            set_errors!(conn, [error("OAuth2", reason)])
+      {:ok, %OAuth2.Response{status_code: status_code, body: identity}}
+      when status_code in 200..399 ->
+        if identity["ok"] do
+          put_private(conn, :slack_identity, identity)
+        else
+          set_errors!(conn, [error(identity["error"], identity["error"])])
         end
+
+      {:error, %OAuth2.Error{reason: reason}} ->
+        set_errors!(conn, [error("OAuth2", reason)])
     end
   end
 
@@ -275,23 +279,27 @@ defmodule Ueberauth.Strategy.Slack do
         conn
 
       true ->
-        auth = conn.private.slack_auth
+        get_users_info(conn, token)
+    end
+  end
 
-        case Ueberauth.Strategy.Slack.OAuth.get(token, "/users.info", %{user: auth["user_id"]}) do
-          {:ok, %OAuth2.Response{status_code: 401, body: _body}} ->
-            set_errors!(conn, [error("token", "unauthorized")])
+  defp get_users_info(conn, token) do
+    opts = %{user: conn.private.slack_auth["user_id"]}
 
-          {:ok, %OAuth2.Response{status_code: status_code, body: user}}
-          when status_code in 200..399 ->
-            if user["ok"] do
-              put_private(conn, :slack_user, user["user"])
-            else
-              set_errors!(conn, [error(user["error"], user["error"])])
-            end
+    case Ueberauth.Strategy.Slack.OAuth.get(token, "/users.info", opts) do
+      {:ok, %OAuth2.Response{status_code: 401, body: _body}} ->
+        set_errors!(conn, [error("token", "unauthorized")])
 
-          {:error, %OAuth2.Error{reason: reason}} ->
-            set_errors!(conn, [error("OAuth2", reason)])
+      {:ok, %OAuth2.Response{status_code: status_code, body: user}}
+      when status_code in 200..399 ->
+        if user["ok"] do
+          put_private(conn, :slack_user, user["user"])
+        else
+          set_errors!(conn, [error(user["error"], user["error"])])
         end
+
+      {:error, %OAuth2.Error{reason: reason}} ->
+        set_errors!(conn, [error("OAuth2", reason)])
     end
   end
 
@@ -306,21 +314,25 @@ defmodule Ueberauth.Strategy.Slack do
         conn
 
       true ->
-        case Ueberauth.Strategy.Slack.OAuth.get(token, "/team.info") do
-          {:ok, %OAuth2.Response{status_code: 401, body: _body}} ->
-            set_errors!(conn, [error("token", "unauthorized")])
+        get_team_info(conn, token)
+    end
+  end
 
-          {:ok, %OAuth2.Response{status_code: status_code, body: team}}
-          when status_code in 200..399 ->
-            if team["ok"] do
-              put_private(conn, :slack_team, team["team"])
-            else
-              set_errors!(conn, [error(team["error"], team["error"])])
-            end
+  defp get_team_info(conn, token) do
+    case Ueberauth.Strategy.Slack.OAuth.get(token, "/team.info") do
+      {:ok, %OAuth2.Response{status_code: 401, body: _body}} ->
+        set_errors!(conn, [error("token", "unauthorized")])
 
-          {:error, %OAuth2.Error{reason: reason}} ->
-            set_errors!(conn, [error("OAuth2", reason)])
+      {:ok, %OAuth2.Response{status_code: status_code, body: team}}
+      when status_code in 200..399 ->
+        if team["ok"] do
+          put_private(conn, :slack_team, team["team"])
+        else
+          set_errors!(conn, [error(team["error"], team["error"])])
         end
+
+      {:error, %OAuth2.Error{reason: reason}} ->
+        set_errors!(conn, [error("OAuth2", reason)])
     end
   end
 
