@@ -24,6 +24,7 @@ defmodule Ueberauth.Strategy.Slack do
   alias Ueberauth.Auth.Info
   alias Ueberauth.Auth.Credentials
   alias Ueberauth.Auth.Extra
+  alias Ueberauth.Strategy.Helpers
 
   # When handling the request just redirect to Slack
   @doc false
@@ -44,7 +45,11 @@ defmodule Ueberauth.Strategy.Slack do
         do: String.slice(callback_url, 0..-2),
         else: callback_url
 
-    opts = Keyword.put(opts, :redirect_uri, callback_url)
+    opts =
+      opts
+      |> Keyword.put(:redirect_uri, callback_url)
+      |> Helpers.with_state_param(conn)
+
     module = option(conn, :oauth2_module)
 
     redirect!(conn, apply(module, :authorize_url!, [opts]))

@@ -25,10 +25,8 @@ defmodule Ueberauth.Strategy.Slack.OAuth do
   end
 
   def get(token, url, params \\ %{}, headers \\ [], opts \\ []) do
-    url =
-      [token: token]
-      |> client()
-      |> to_url(url, Map.put(params, "token", token.access_token))
+    url = to_url(client(), url, params)
+    headers = headers ++ [authorization: "Bearer #{token.access_token}"]
 
     OAuth2.Client.get(client(), url, headers, opts)
   end

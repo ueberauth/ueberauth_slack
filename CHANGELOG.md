@@ -1,3 +1,8 @@
+# v 0.6.0
+
+* Support Ueberauth 0.7.x
+* Fix deprecated token in query params
+
 # v 0.5.0
 
 * Pin OAuth2 to 0.8.0

@@ -1,7 +1,7 @@
 defmodule UeberauthSlack.Mixfile do
   use Mix.Project
 
-  @version "0.6.0"
+  @version "0.7.0"
 
   def project do
     [
@@ -27,7 +27,7 @@ defmodule UeberauthSlack.Mixfile do
   defp deps do
     [
       {:oauth2, "~> 1.0"},
-      {:ueberauth, "~> 0.6"},
+      {:ueberauth, "~> 0.7"},
       {:jason, "~> 1.0"},
 
       # dev/test dependencies
