@@ -5,8 +5,8 @@ defmodule Ueberauth.Strategy.Slack.OAuth do
   @defaults [
     strategy: __MODULE__,
     site: "https://slack.com/api",
-    authorize_url: "https://slack.com/oauth/authorize",
-    token_url: "https://slack.com/api/oauth.access"
+    authorize_url: "https://slack.com/v2/oauth/authorize",
+    token_url: "https://slack.com/api/oauth.v2.access"
   ]
 
   def client(opts \\ []) do

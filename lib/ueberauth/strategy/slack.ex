@@ -73,17 +73,35 @@ defmodule Ueberauth.Strategy.Slack do
 
     token = apply(module, :get_token!, [params, options])
 
-    if token.access_token == nil do
-      set_errors!(conn, [
-        error(token.other_params["error"], token.other_params["error_description"])
-      ])
-    else
-      conn
-      |> store_token(token)
-      |> fetch_auth(token)
-      |> fetch_identity(token)
-      |> fetch_user(token)
-      |> fetch_team(token)
+    # Ported from:
+    # https://github.com/emilsoman/ueberauth_slack/blob/4b428e06f6287bb72d4314398fd91fc2f2e5839c/lib/ueberauth/strategy/slack.ex#L64
+    case token do
+      %{access_token: nil, other_params: %{"authed_user" => %{"access_token" => access_token}}} ->
+        token =
+          token
+          |> put_in(
+            [Access.key(:other_params), "scope"],
+            token.other_params["authed_user"]["scope"]
+          )
+          |> Map.put(:access_token, access_token)
+          |> Map.put(:token_type, token.other_params["authed_user"]["token_type"])
+
+        conn
+        |> store_token(token)
+        |> fetch_identity(token)
+
+      %{access_token: nil} ->
+        set_errors!(conn, [
+          error(token.other_params["error"], token.other_params["error_description"])
+        ])
+
+      token ->
+        conn
+        |> store_token(token)
+        |> fetch_auth(token)
+        |> fetch_identity(token)
+        |> fetch_user(token)
+        |> fetch_team(token)
     end
   end
 
@@ -239,9 +257,12 @@ defmodule Ueberauth.Strategy.Slack do
     end
   end
 
+  # https://github.com/ueberauth/ueberauth_slack/issues/35#issuecomment-616433473
   defp fetch_identity(conn, token) do
-    scope_string = token.other_params["scope"] || ""
+    scope_string = token.other_params["authed_user"]["scope"] || ""
     scopes = String.split(scope_string, ",")
+
+    user_token = OAuth2.AccessToken.new(token.other_params["authed_user"])
 
     case "identity.basic" in scopes do
       false ->
