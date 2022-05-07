@@ -2,7 +2,11 @@
 
 ## v0.7.0
 
-* Fix CSRF attack
+* Set oauth2 json library based on ueberauth's json library
+* Extract images and team domain from identity only auth
+* Fix a markdown problem in the docs
+* Format code with mix format
+* Bump ueberauth to v0.7.0
 
 ## v0.6.0
 
